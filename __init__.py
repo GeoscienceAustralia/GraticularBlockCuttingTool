@@ -31,5 +31,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .graticular_block_cutting_tool import GraticularBlockCuttingTool_QGIS
-    return GraticularBlockCuttingTool_QGIS(iface)
+    from .graticular_block_cutting_tool import GraticularBlockCuttingTool
+    return GraticularBlockCuttingTool(iface)

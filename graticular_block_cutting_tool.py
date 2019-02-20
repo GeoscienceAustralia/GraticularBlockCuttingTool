@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- GraticularBlockCuttingTool_QGIS
+ GraticularBlockCuttingTool
                                  A QGIS plugin
  This plugin cuts graticular polygon blocks
                               -------------------
@@ -24,9 +24,10 @@ from qgis.core import *
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QTableWidgetItem
+from .Resources_rc import *
 
 # Import the code for the dialog
-from .graticular_block_cutting_tool_dialog import GraticularBlockCuttingTool_QGISDialogBase
+from .graticular_block_cutting_tool_dialog import GraticularBlockCuttingToolDialogBase
 import os.path
 
 import xml.etree.ElementTree as ET
@@ -41,13 +42,13 @@ def debug_print(msg):
         print(msg)
 
 
-Title = "GraticularBlockCuttingTool_QGIS 21 July 2016 10:20 AM"
+Title = "GraticularBlockCuttingTool 21 July 2016 10:20 AM"
 BlockLetter_of_1M_BlockID = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 
 # USER_CONFIG_FILE_PATH = "c:/Workspace/QGIS/CodeDev/user.config"
 
 # os.path.realpath(__file__):
-# 'C:\\Users\\u43418\\.qgis2\\python\\plugins\\GraticularBlockCuttingTool_QGIS\\graticular_block_cutting_tool.py
+# 'C:\\Users\\u43418\\.qgis2\\python\\plugins\\GraticularBlockCuttingTool\\graticular_block_cutting_tool.py
 
 USER_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__),   "user.config")
 
@@ -143,7 +144,7 @@ def GetMapSheetName(layer):
 #         self.progressBar_Widget.setValue(value)
 
 
-class GraticularBlockCuttingTool_QGIS:
+class GraticularBlockCuttingTool:
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
@@ -163,7 +164,7 @@ class GraticularBlockCuttingTool_QGIS:
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'GraticularBlockCuttingTool_QGIS_{}.qm'.format(locale))
+            'GraticularBlockCuttingTool_{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -173,13 +174,13 @@ class GraticularBlockCuttingTool_QGIS:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = GraticularBlockCuttingTool_QGISDialogBase()
+        self.dlg = GraticularBlockCuttingToolDialogBase()
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&GraticularBlockCuttingTool_QGIS')
-        self.toolbar = self.iface.addToolBar(u'GraticularBlockCuttingTool_QGIS')
-        self.toolbar.setObjectName(u'GraticularBlockCuttingTool_QGIS')
+        self.menu = self.tr(u'&GraticularBlockCuttingTool')
+        self.toolbar = self.iface.addToolBar(u'GraticularBlockCuttingTool')
+        self.toolbar.setObjectName(u'GraticularBlockCuttingTool')
 
         #
         self.dlg.setWindowTitle(Title)
@@ -209,7 +210,7 @@ class GraticularBlockCuttingTool_QGIS:
         :rtype: QString
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('GraticularBlockCuttingTool_QGIS', message)
+        return QCoreApplication.translate('GraticularBlockCuttingTool', message)
 
     def add_action(
         self,
@@ -287,10 +288,10 @@ class GraticularBlockCuttingTool_QGIS:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/GraticularBlockCuttingTool_QGIS/icon.png'
+        icon_path = ':/plugins/GraticularBlockCuttingTool/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Cutt Graticular Blocks'),
+            text=self.tr(u'Cut Graticular Blocks'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -298,7 +299,7 @@ class GraticularBlockCuttingTool_QGIS:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&GraticularBlockCuttingTool_QGIS'),
+                self.tr(u'&GraticularBlockCuttingTool'),
                 action)
             self.iface.removeToolBarIcon(action)
 
