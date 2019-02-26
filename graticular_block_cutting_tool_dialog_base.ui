@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>527</height>
+    <width>808</width>
+    <height>726</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,9 +16,9 @@
   <widget class="QDialogButtonBox" name="button_box">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>590</x>
      <y>690</y>
-     <width>341</width>
+     <width>211</width>
      <height>32</height>
     </rect>
    </property>
@@ -34,8 +34,8 @@
     <rect>
      <x>20</x>
      <y>40</y>
-     <width>611</width>
-     <height>101</height>
+     <width>770</width>
+     <height>100</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -124,9 +124,9 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>360</y>
-     <width>381</width>
-     <height>111</height>
+     <y>380</y>
+     <width>560</width>
+     <height>240</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -140,7 +140,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>490</y>
+     <y>650</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -157,7 +157,7 @@
     <rect>
      <x>20</x>
      <y>180</y>
-     <width>381</width>
+     <width>770</width>
      <height>151</height>
     </rect>
    </property>
@@ -221,10 +221,13 @@
    </property>
   </widget>
   <widget class="QPushButton" name="btn_Test">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>490</y>
+     <x>470</x>
+     <y>650</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -236,10 +239,10 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>420</x>
-     <y>260</y>
+     <x>590</x>
+     <y>410</y>
      <width>211</width>
-     <height>211</height>
+     <height>221</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -273,7 +276,7 @@
         <rect>
          <x>10</x>
          <y>120</y>
-         <width>131</width>
+         <width>145</width>
          <height>23</height>
         </rect>
        </property>
@@ -286,7 +289,7 @@
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>121</width>
+         <width>141</width>
          <height>17</height>
         </rect>
        </property>
@@ -299,7 +302,7 @@
         <rect>
          <x>10</x>
          <y>40</y>
-         <width>81</width>
+         <width>111</width>
          <height>17</height>
         </rect>
        </property>
@@ -307,7 +310,7 @@
         <string>Block Number</string>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
       <widget class="QCheckBox" name="chk_MapSheet">
@@ -323,7 +326,7 @@
         <string>Map Sheet</string>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
       <widget class="QCheckBox" name="chk_PolygonPartAndTotalField">
@@ -331,7 +334,7 @@
         <rect>
          <x>10</x>
          <y>80</y>
-         <width>131</width>
+         <width>161</width>
          <height>17</height>
         </rect>
        </property>
@@ -339,7 +342,7 @@
         <string>Polygon Part and Total</string>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
       <widget class="QCheckBox" name="chk_VerticesField">
@@ -365,22 +368,22 @@
   <widget class="QGroupBox" name="horizontalGroupBox">
    <property name="geometry">
     <rect>
-     <x>480</x>
-     <y>180</y>
-     <width>121</width>
+     <x>590</x>
+     <y>340</y>
+     <width>151</width>
      <height>51</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout">
     <item row="0" column="1">
+     <widget class="QComboBox" name="comboScale"/>
+    </item>
+    <item row="0" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
        <string>Scale</string>
       </property>
      </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QComboBox" name="comboScale"/>
     </item>
    </layout>
   </widget>
