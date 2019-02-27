@@ -25,11 +25,11 @@
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
-    """Load GraticularBlockCuttingTool_QGIS class from file graticular_block_cutting_tool.
+    """Load GraticularBlockCuttingTool_QGIS class from file GraticularBlockCuttingTool_QGIS.
 
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
     #
-    from .graticular_block_cutting_tool import GraticularBlockCuttingTool
-    return GraticularBlockCuttingTool(iface)
+    from .graticular_block_cutting_tool import GraticularBlockCuttingTool_QGIS
+    return GraticularBlockCuttingTool_QGIS(iface)

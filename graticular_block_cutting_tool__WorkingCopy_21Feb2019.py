@@ -20,14 +20,15 @@
  *                                                                         *
  ***************************************************************************/
 """
+
 from qgis.core import *
 
 # qz added
 import PyQt4
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFile, QFileInfo
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtGui import QAction, QIcon, QMessageBox
 # Initialize Qt resources from file resources.py
 import Resources_rc
 # Import the code for the dialog
@@ -39,46 +40,14 @@ import xml.etree.ElementTree as ET
 import datetime
 import copy
 
+# if set DEBUG to True, make sure Python Console is active
 DEBUG = False
 def debug_print(msg):
     if DEBUG:
         print msg
 
-Title = "GraticularBlockCuttingTool_QGIS 28 Feb 2019 10:00 AM"
+Title = "GraticularBlockCuttingTool_QGIS 19 Feb 2018 17:18 PM"
 BlockLetter_of_1M_BlockID  = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
-
-from AltFieldName_dic import *
-
-# Dictionary: generic name as key, each tuple is a collection of truncated, short names and some variants
-#
-# some data sets use Number_of_Vertices, and some use Number_Of_Vertices
-# shortFieldName_dict = {
-# "BLOCK_ID":("BLOCK_ID","BlkID"),
-# "Map_Sheet":("Map_Sheet","MapSheet"),
-# "Block_Number":("Block_Numb","BlkNo"),
-# "Block_Letter":("Block_Lett","BlkLetter"),
-# "Block_Number_XXX":("Block_Numb","BlkNoXXX"),
-# "Block_ID_1D":("Block_ID_1","BlkID_1D","BLK_ID_1D"),
-# "WMB_ID":("WMB_ID","WMB_ID"),
-# "Country":("Country","Country"),
-# "Offshore_Area":("Offshore_A","Ofshr_Area"),
-# "Epoch":("Epoch","Epoch"),
-# "Datum":("Datum","Datum"),
-# "Vertices":("Vertices","Vertices"),
-# "Cut":("Cut","Cut"),
-# "Part":("Part","Part"),
-# "Total":("Total","Total"),
-# "Comment":("Comment","Comment"),
-# "Number_Of_Vertices":("Number_of_Vertices","Number_of","Number_Of_","NoOfVertx"),
-# "Area_Acres":("Area_Acres","AreaAcres","Area_AC"),
-# "Area_Hectares":("Area_Hecta","AreaHectar","Area_HA"),
-# "Map_Name":("Map_Name","Map_Name"),
-# "LEGSOU":("LEGSOU","LEGSOU"),
-# "Registry_No":("Registry_N","REG_No"),
-# "IP_Owner":("IP_Owner","IP_Owner"),
-# "Licence":("Licence","Licence"),
-# "Disclaimer":("Disclaimer","Disclaimer"),
-# }
 
 #USER_CONFIG_FILE_PATH = "c:/Workspace/QGIS/CodeDev/user.config"
 
@@ -87,213 +56,56 @@ from AltFieldName_dic import *
 
 USER_CONFIG_FILE_PATH = os.path.join( os.path.dirname(__file__),   "user.config")
 
-def GetActualFieldName(layer, standard_field_name):
+# def GetActualFieldName(feature, field_name):
+#     #
+#     # To support both shape file and file geodatabase
+#     # shape file's field name is limited to 10 characters
+#     # so if input is a shape file, then limit the field_name to 10 characters long
+#
+#     field_index = feature.fields().indexFromName(field_name)
+#
+#     if field_index == -1:
+#         field_name = field_name[:10]
+#
+#     return field_name
+
+def GetActualFieldName(layer, field_name):
     #
     # To support both shape file and file geodatabase
     # shape file's field name is limited to 10 characters
     # so if input is a shape file, then limit the field_name to 10 characters long
-    #
-    # Also support short field name
 
-    # 5M uses 'Number_of_Vertices'
-    # 1M and newer dataset: Number_Of_Vertices
+    # 5M uses 'Nunmber_of_Vertices'
+    # 1M and newer dataset: Nunmber_Of_Vertices
+    if field_name == "Number_Of_Vertices":
 
-    actual_field_name = ""
+        field_index = layer.fields().indexFromName(field_name)
 
-    all_field_names = AltFieldName_dict[standard_field_name]
+        if field_index == -1:
+            # try shapefile
+            field_name = field_name[:10]
+            field_index = layer.fields().indexFromName(field_name)
+        
+            # try 5M 
+            if field_index == -1:
+                field_name = "Number_of_Vertices"
+                field_index = layer.fields().indexFromName(field_name)
 
-    for each_field_name in all_field_names:
+                if field_index == -1:
+                    field_name = field_name[:10]
 
-        if layer.fields().indexFromName(each_field_name) <> -1:
-            actual_field_name = each_field_name
-            break
+        return field_name
 
-    return actual_field_name
+    # for any other field
 
-# def GetActualFieldName_V3_working(layer, field_name):
-#     #
-#     # To support both shape file and file geodatabase
-#     # shape file's field name is limited to 10 characters
-#     # so if input is a shape file, then limit the field_name to 10 characters long
-#     #
-#     # Also support short field name
-#
-#     # 5M uses 'Number_of_Vertices'
-#     # 1M and newer dataset: Number_Of_Vertices
-#
-#     return_field_name = ""
-#
-#     if field_name.lower() == "Number_Of_Vertices".lower():
-#
-#         # try 1M and newer dataset
-#         field_name = "Number_Of_Vertices"
-#         if layer.fields().indexFromName(field_name) <> -1:
-#             return_field_name = field_name
-#
-#             # try truncated name
-#         if layer.fields().indexFromName(field_name[:10]) <> -1:
-#             return_field_name = field_name[:10]
-#
-#             # try short field name
-#         if field_name in AltFieldName_dict:
-#             if layer.fields().indexFromName(AltFieldName_dict[field_name]) <> -1:
-#                 return_field_name = AltFieldName_dict[field_name]
-#
-#         # try 5M and newer dataset
-#         field_name = "Number_of_Vertices"
-#         if layer.fields().indexFromName(field_name) <> -1:
-#             return_field_name = field_name
-#
-#             # try truncated name
-#         if layer.fields().indexFromName(field_name[:10]) <> -1:
-#             return_field_name = field_name[:10]
-#
-#             # try short field name
-#         if field_name in AltFieldName_dict:
-#             if layer.fields().indexFromName(AltFieldName_dict[field_name]) <> -1:
-#                 return_field_name = AltFieldName_dict[field_name]
-#
-#
-#         return return_field_name
-#
-#     # for any other field
-#
-#     if layer.fields().indexFromName(field_name) <> -1:
-#         return_field_name = field_name
-#
-#     # try truncated name
-#     if layer.fields().indexFromName(field_name[:10]) <> -1:
-#         return_field_name = field_name[:10]
-#
-#     # try short field name
-#     if field_name in AltFieldName_dict:
-#         if layer.fields().indexFromName(AltFieldName_dict[field_name]) <> -1:
-#             return_field_name = AltFieldName_dict[field_name]
-#
-#     return return_field_name
-#
-# def GetActualFieldName_V2_working(layer, field_name):
-#     #
-#     # To support both shape file and file geodatabase
-#     # shape file's field name is limited to 10 characters
-#     # so if input is a shape file, then limit the field_name to 10 characters long
-#     #
-#     # Also support short field name
-#
-#     # 5M uses 'Number_of_Vertices'
-#     # 1M and newer dataset: Number_Of_Vertices
-#
-#     return_field_name = ""
-#
-#     if field_name.lower() == "Number_Of_Vertices".lower():
-#
-#         # try 1M and newer dataset
-#         field_name = "Number_Of_Vertices"
-#         field_index = layer.fields().indexFromName(field_name)
-#
-#         if field_index <> -1:
-#             return_field_name = field_name
-#         else:
-#             # try truncated name
-#             truncated_field_name = field_name[:10]
-#             field_index = layer.fields().indexFromName(truncated_field_name)
-#
-#             if field_index <> -1:
-#                 return_field_name = truncated_field_name
-#             else:
-#                 # try short field name
-#                 if field_name in AltFieldName_dict[field_name]:
-#                     short_field_name = AltFieldName_dict[field_name]
-#                     field_index = layer.fields().indexFromName(short_field_name)
-#
-#                     if field_index <> -1:
-#                         return_field_name = short_field_name
-#
-#         # try 5M and newer dataset
-#         field_name = "Number_of_Vertices"
-#         field_index = layer.fields().indexFromName(field_name)
-#
-#         if field_index <> -1:
-#             return_field_name = field_name
-#         else:
-#             # try truncated name
-#             truncated_field_name = field_name[:10]
-#             field_index = layer.fields().indexFromName(truncated_field_name)
-#
-#             if field_index <> -1:
-#                 return_field_name = truncated_field_name
-#             else:
-#                 # try short field name
-#                 if field_name in AltFieldName_dict:
-#                     short_field_name = AltFieldName_dict[field_name]
-#                     field_index = layer.fields().indexFromName(short_field_name)
-#
-#                     if field_index <> -1:
-#                         return_field_name = short_field_name
-#
-#         return return_field_name
-#
-#     # for any other field
-#
-#     field_index = layer.fields().indexFromName(field_name)
-#
-#     if field_index <> -1:
-#         return_field_name = field_name
-#     else:
-#         # try truncated name
-#         truncated_field_name = field_name[:10]
-#         field_index = layer.fields().indexFromName(truncated_field_name)
-#
-#         if field_index <> -1:
-#             return_field_name = truncated_field_name
-#         else:
-#             # try short field name
-#             if field_name in AltFieldName_dict:
-#                 short_field_name = AltFieldName_dict[field_name]
-#                 field_index = layer.fields().indexFromName(short_field_name)
-#
-#                 if field_index <> -1:
-#                     return_field_name = short_field_name
-#
-#     return return_field_name
-#
-# def GetActualFieldName_V1_working(layer, field_name):
-#     #
-#     # To support both shape file and file geodatabase
-#     # shape file's field name is limited to 10 characters
-#     # so if input is a shape file, then limit the field_name to 10 characters long
-#
-#     # 5M uses 'Number_of_Vertices'
-#     # 1M and newer dataset: Nunmber_Of_Vertices
-#     if field_name == "Number_Of_Vertices":
-#
-#         field_index = layer.fields().indexFromName(field_name)
-#
-#         if field_index == -1:
-#             # try shapefile
-#             field_name = field_name[:10]
-#             field_index = layer.fields().indexFromName(field_name)
-#
-#             # try 5M
-#             if field_index == -1:
-#                 field_name = "Number_of_Vertices"
-#                 field_index = layer.fields().indexFromName(field_name)
-#
-#                 if field_index == -1:
-#                     field_name = field_name[:10]
-#
-#         return field_name
-#
-#     # for any other field
-#
-#     field_index = layer.fields().indexFromName(field_name)
-#
-#     if field_index == -1:
-#         field_name = field_name[:10]
-#         field_index = layer.fields().indexFromName(field_name)
-#         #print "shape file", field_name,field_index
-#
-#     return field_name
+    field_index = layer.fields().indexFromName(field_name)
+
+    if field_index == -1:
+        field_name = field_name[:10]
+        field_index = layer.fields().indexFromName(field_name)
+        #print "shape file", field_name,field_index
+
+    return field_name
 
 def GetMapSheetName(layer):
 
@@ -309,8 +121,8 @@ def GetMapSheetName(layer):
         sep = "_1D_"
     elif "_5M_" in layer_name:
         sep = "_5M_"
-    elif "_6M_" in layer_name:
-        sep = "_6M_"
+    elif "_10M_" in layer_name:
+        sep = "_10M_"
     elif "_10S_" in layer_name:
         sep = "_10S_"
     elif "_6S_" in layer_name:
@@ -381,11 +193,12 @@ class GraticularBlockCuttingTool_QGIS:
         #
         self.dlg.setWindowTitle(Title)
         #
-        self.dlg.comboScale.addItem("5M")
-        self.dlg.comboScale.addItem("6M")
         self.dlg.comboScale.addItem("1M")
-        self.dlg.comboScale.addItem("10S")
+        self.dlg.comboScale.addItem("5M")
+        self.dlg.comboScale.addItem("1D")
+        self.dlg.comboScale.addItem("10M")
         self.dlg.comboScale.addItem("6S")
+        self.dlg.comboScale.addItem("10S")
         #
         self.dlg.btn_EditUserSettings.clicked.connect(self.EditUserSettings)
         self.dlg.btn_SaveUserSettings.clicked.connect(self.SaveUserSettings)
@@ -513,27 +326,23 @@ class GraticularBlockCuttingTool_QGIS:
 
     def progressBar_update(self):
             self.completed = self.completed + 1
-            value = (self.completed*100)/self.max_count
+            value = self.completed*100/self.max_count
             if value > 100: value = 100
             self.dlg.progressBar.setValue(value)
             self.dlg.progressBar.repaint() # asynchronous
             self.dlg.repaint()
             QCoreApplication.processEvents()
 
-    def progressBar_end(self):
-        # refer to BUG #11007
-        # https://issues.qgis.org/issues/11007:
-        # deleted features still being counted if using: layer.featureCount()
-        # but iter = layer.getFeatures() returns the right number of features
-        # Due to the bug above, progressBar will not reach 100 %
-        # so use this to force it to show the maximum value
-            value = 100
-            self.dlg.progressBar.setValue(value)
-            self.dlg.progressBar.repaint() # asynchronous
-            self.dlg.repaint()
-            QCoreApplication.processEvents()
-
     def download(self):
+
+        cutted_layer = self.iface.mapCanvas().layer(1)
+        msg = 'isEditable %s' % cutted_layer.isEditable()
+        self.Add_Message(msg)
+
+        if cutted_layer.isEditable():
+            QMessageBox.information(None, "OK:", str(cutted_layer.isEditable()))
+        else:
+            QMessageBox.information(None, "Warning:", str(cutted_layer.isEditable()))
 
         self.progressBar_Init(1000)
         while self.completed < 1000:
@@ -596,7 +405,6 @@ class GraticularBlockCuttingTool_QGIS:
     def ClearMessage(self):
          # clear message display
         self.dlg.listWidget_Messages.clear()
-        self.progressBar_Init(100)
 
     def PassInitialChecks(self):
 
@@ -622,174 +430,12 @@ class GraticularBlockCuttingTool_QGIS:
                 self.Add_Message(msg)
                 return False
 
-    def CutPolygons_Debug_Ver_2_16(self):
-
-        # clear message display
-        self.dlg.listWidget_Messages.clear()
-
-        # make sure layers are in right order
-        if  self.PassInitialChecks() is False:
-            return ()
-
-        top_layer = self.iface.mapCanvas().layer(0)
-        cutter_layer = top_layer
-
-        number_of_layers = self.iface.mapCanvas().layerCount()
-
-        for i in range(1,number_of_layers,1):
-
-            cutted_layer = self.iface.mapCanvas().layer(i)
-            debug_print("cutted_layer: %s" % repr(cutted_layer))
-
-            field_index_Vertices = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'Vertices') )
-            field_index_BLOCK_ID = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'BLOCK_ID') )
-            field_index_Total = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'Total') )
-
-            # make sure the layer to be cut is a polygon feature class
-            if cutted_layer.wkbType() <> QGis.WKBPolygon and cutted_layer.wkbType() <> QGis.WKBMultiPolygon:
-                continue
-
-            Start_time = datetime.datetime.now()
-            self.Add_Message("Start cutting polygons %s" % Start_time)
-
-            # *************************************************************************************************************
-
-            selected_cutted_features = cutted_layer.selectedFeatures()
-
-            selected_feature_count = cutted_layer.selectedFeatureCount()
-            self.Add_Message("Number of polygons to be cut: %d" % selected_feature_count)
-
-            cutted_layer.startEditing()
-
-            self.progressBar_Init(selected_feature_count)
-
-            for each_polygon_feature in selected_cutted_features:
-
-                self.progressBar_update()
-
-                BLOCK_ID = each_polygon_feature[field_index_BLOCK_ID]
-
-                # search for cutter features which intersect with each_polygon_feature
-
-                myGeometry = each_polygon_feature.geometry()
-                areaOfInterest = myGeometry.boundingBox()
-
-                request = QgsFeatureRequest()
-                request.setFilterRect(areaOfInterest)
-
-                cutter_features = cutter_layer.getFeatures(request)
-
-                merged_cutter_geom = QgsGeometry().asPolyline()
-
-                first_cutter_geom_defined = False
-
-                for each_cutter_feature in cutter_features:
-
-                    current_geom = each_cutter_feature.geometryAndOwnership()
-
-                    #
-                    if first_cutter_geom_defined == False:
-                        merged_cutter_geom = current_geom
-                        first_cutter_geom_defined = True
-                    else:
-                        merged_cutter_geom = merged_cutter_geom.combine(current_geom)
-
-                if not merged_cutter_geom: continue     # no intersect polylines found, move to next polygon
-
-                geom_col = merged_cutter_geom.asGeometryCollection()
-
-                # giving problem ?
-                debug_print ("For BLOCK_ID=%s, may need to cut %d times" %  (BLOCK_ID,len(geom_col)) )
-
-                for each_merged_cutter_geom in geom_col:
-
-                    #debug_print "Each geom_col ->", each_merged_cutter_geom.asPolyline()
-                    debug_print ("Each cutting geom_col  length-> %s" % each_merged_cutter_geom.length())
-
-                    # get all polygon features with the same BLOCK_ID: one is the original, and the others are newly created after cutting
-                    request_2 = QgsFeatureRequest().setFilterExpression( u'"BLOCK_ID" =\'' + BLOCK_ID + '\'' )
-                    polygon_features_with_current_BLOCK_ID = cutted_layer.getFeatures( request_2 )
-
-                    for each_polygon_feature_with_current_BLOCK_ID in polygon_features_with_current_BLOCK_ID:
-
-                        debug_print ("Test to see if this polygon will be cut: id= %s" % each_polygon_feature_with_current_BLOCK_ID.id())
-
-                        This_geometry = each_polygon_feature_with_current_BLOCK_ID.geometry()
-
-                        if This_geometry.intersects(each_merged_cutter_geom):
-
-                            # when commitChanges() is called, edit session is  stopped, so call startEditing() to make sure it is in editing mode
-                            cutted_layer.startEditing()
-
-                            debug_print( "Try to cut this polygon: id=%d" % each_polygon_feature_with_current_BLOCK_ID.id())
-                            #split geometry
-                            result, newGeometries, topoTestPoints = This_geometry.splitGeometry(each_merged_cutter_geom.asPolyline(), True)
-                            This_geometry_cp = This_geometry
-
-                            if result ==0:
-
-                                debug_print("Cutting ok")
-                                # update the original feature
-                                # each_polygon_feature_with_current_BLOCK_ID.setGeometry(This_geometry_cp)
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Total, '-1') # set 'Total' field to -1 to indicate it has been cut
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Vertices, '') # if use GEO_NONE then it is a string 'NONE'
-                                # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                # updateFeature() function has problem witg shapefile for QGIS 2.14
-                                #cutted_layer.updateFeature(each_polygon_feature_with_current_BLOCK_ID)
-                                #cutted_layer.changeGeometry(each_polygon_feature_with_current_BLOCK_ID.id(), This_geometry) # This line will crash !!!!
-
-                                # commit after each cut
-                                # if commit here new feature is deleted !!!
-                                #res_1 = cutted_layer.commitChanges()
-                                #debug_print ("commit changes: res_1=%s" % res_1)
-
-                                # create new feature from original
-                                #cutted_layer.startEditing()
-
-                                newFeature = QgsFeature()
-                                newFeature.setGeometry(This_geometry_cp)
-                                # copy all attributes. Must have this, otherwise the new feature will NOT be created, unlike ArcGIS's way of creating new features
-                                newFeature.setAttributes(each_polygon_feature_with_current_BLOCK_ID.attributes())
-                                # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                newFeature.setAttribute(field_index_Vertices, '')
-                                newFeature.setAttribute(field_index_Total, '-1')
-
-                                #res = cutted_layer.addFeatures([newFeature],True)
-                                res = cutted_layer.addFeature(newFeature,True)
-                                debug_print ("Add 'new' feature: %s" % res)
-                                debug_print ("new polygon: id=%s" % newFeature.id())
-
-                                # for aGeom in newGeometries:
-                                #
-                                #     newFeature = QgsFeature()
-                                #     newFeature.setGeometry(aGeom)
-                                #     # copy all attributes. Must have this, otherwise the new feature will NOT be created, unlike ArcGIS's way of creating new features
-                                #     newFeature.setAttributes(each_polygon_feature_with_current_BLOCK_ID.attributes())
-                                #     # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                #     newFeature.setAttribute(field_index_Vertices, '')
-                                #     newFeature.setAttribute(field_index_Total, '-1')
-                                #
-                                #     res = cutted_layer.addFeatures([newFeature],True)
-                                #     debug_print ("Add new feature: %s" % res)
-                                #     debug_print ("new polygon: id=%s" % newFeature.id())
-
-                                # delete the original
-                                cutted_layer.deleteFeature(each_polygon_feature_with_current_BLOCK_ID.id())
-
-                                # must commit changes to ensure changes (updated original and newly created features) are written back to disk so that when these features are
-                                # read back, they have been actually updated.
-                                res_2 = cutted_layer.commitChanges()
-
-                                debug_print ("commit changes: res_2=%s" % res_2)
-
-                                break   # try to cut only once per segment
-
-            End_time = datetime.datetime.now()
-            self.Add_Message("Finished cutting polygons %s (%s)" % (End_time,End_time - Start_time))
-
-            self.PopPolygon_Area_Fields(cutted_layer)
-
-
+    def MakeLayerInEditingMode(self, this_layer):
+        if this_layer.isEditable():
+            return True
+        else:
+            QMessageBox.information(None, "Warning", "Make sure this layer is in Editing Mode: '%s' " % this_layer.name() )
+            return False
 
     def CutPolygons(self):
 
@@ -810,6 +456,11 @@ class GraticularBlockCuttingTool_QGIS:
             cutted_layer = self.iface.mapCanvas().layer(i)
             debug_print("cutted_layer: %s" % repr(cutted_layer))
 
+            if self.MakeLayerInEditingMode(cutted_layer) is False:
+                return ()
+
+            #field_index_Vertices = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'Vertices') )
+            #field_index_BLOCK_ID = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'BLOCK_ID') )
             field_index_Vertices = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'Vertices') )
             field_index_BLOCK_ID = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'BLOCK_ID') )
             field_index_Total = cutted_layer.fields().indexFromName( GetActualFieldName(cutted_layer,'Total') )
@@ -830,6 +481,7 @@ class GraticularBlockCuttingTool_QGIS:
             self.Add_Message("Number of polygons to be cut: %d" % selected_feature_count)
 
             cutted_layer.startEditing()
+            cutted_layer.beginEditCommand("Cutting polygons")
 
             for each_polygon_feature in selected_cutted_features:
 
@@ -869,6 +521,8 @@ class GraticularBlockCuttingTool_QGIS:
                 # giving problem ?
                 debug_print ("For BLOCK_ID=%s, may need to cut %d times" %  (BLOCK_ID,len(geom_col)) )
                 #print "For BLOCK_ID=%s, may need to cut %d times" %  (BLOCK_ID,len(geom_col))
+                msg = "For BLOCK_ID=%s, may need to cut %d times" % (BLOCK_ID,len(geom_col))
+                self.Add_Message(msg)
 
                 for each_merged_cutter_geom in geom_col:
 
@@ -876,8 +530,7 @@ class GraticularBlockCuttingTool_QGIS:
                     debug_print ("Each cutting geom_col  length-> %s" % each_merged_cutter_geom.length())
 
                     # get all polygon features with the same BLOCK_ID: one is the original, and the others are newly created after cutting
-                    BLOCK_ID_FieldName = GetActualFieldName(cutted_layer, "BLOCK_ID")
-                    request_2 = QgsFeatureRequest().setFilterExpression( u'"' + BLOCK_ID_FieldName + '" =\'' + BLOCK_ID + '\'' )
+                    request_2 = QgsFeatureRequest().setFilterExpression( u'"BLOCK_ID" =\'' + BLOCK_ID + '\'' )
                     polygon_features_with_current_BLOCK_ID = cutted_layer.getFeatures( request_2 )
 
                     for each_polygon_feature_with_current_BLOCK_ID in polygon_features_with_current_BLOCK_ID:
@@ -888,44 +541,32 @@ class GraticularBlockCuttingTool_QGIS:
 
                         if This_geometry.intersects(each_merged_cutter_geom):
 
-                            # when commitChanges() is called, edit session is  stopped, so call startEditing() to make sure it is in editing mode
-                            cutted_layer.startEditing()
+                            #cutted_layer.beginEditCommand(QtCore.QCoreApplication.translate("editcommand", "Split features"))
+                            #cutted_layer.beginEditCommand("Cutting polygons")
+                            featuresBeingSplit = 0
+                            featuresToAdd = []
 
                             debug_print( "Try to cut this polygon: id=%d" % each_polygon_feature_with_current_BLOCK_ID.id())
-                            #split geometry
-                            result, newGeometries, topoTestPoints = This_geometry.splitGeometry(each_merged_cutter_geom.asPolyline(), True)
-                            This_geometry_cp = This_geometry
+                            try:
+                                #split geometry
+                                result, newGeometries, topoTestPoints = This_geometry.splitGeometry(each_merged_cutter_geom.asPolyline(), False)
+                                This_geometry_cp = This_geometry
+                            except:
+                                debug_print("Failed to cut this polygon: id=%d" % each_polygon_feature_with_current_BLOCK_ID.id())
+                                return None
 
                             if result ==0:
 
                                 debug_print("Cutting ok")
                                 # update the original feature
-                                # each_polygon_feature_with_current_BLOCK_ID.setGeometry(This_geometry_cp)
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Total, '-1') # set 'Total' field to -1 to indicate it has been cut
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Vertices, '') # if use GEO_NONE then it is a string 'NONE'
+                                each_polygon_feature_with_current_BLOCK_ID.setGeometry(This_geometry)
+                                each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Total, '-1') # set 'Total' field to -1 to indicate it has been cut
+                                each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Vertices, '') # if use GEO_NONE then it is a string 'NONE'
                                 # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                # updateFeature() function has problem witg shapefile for QGIS 2.14
-                                #cutted_layer.updateFeature(each_polygon_feature_with_current_BLOCK_ID)
-                                #cutted_layer.changeGeometry(each_polygon_feature_with_current_BLOCK_ID.id(), This_geometry) # This line will crash !!!!
+                                # updateFeature() function has problem with shapefile for QGIS 2.14
+                                cutted_layer.updateFeature(each_polygon_feature_with_current_BLOCK_ID)
 
-                                # commit after each cut
-                                # if commit here new feature is deleted !!!
-                                #cutted_layer.commitChanges()
-
-                                # create new feature from original
-
-                                newFeature = QgsFeature()
-                                newFeature.setGeometry(This_geometry_cp)
-                                # copy all attributes. Must have this, otherwise the new feature will NOT be created, unlike ArcGIS's way of creating new features
-                                newFeature.setAttributes(each_polygon_feature_with_current_BLOCK_ID.attributes())
-                                # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                newFeature.setAttribute(field_index_Vertices, '')
-                                newFeature.setAttribute(field_index_Total, '-1')
-
-                                res = cutted_layer.addFeatures([newFeature],True)
-                                debug_print ("Add 'new' feature: %s" % res)
-                                debug_print ("new polygon: id=%s" % newFeature.id())
-
+                                debug_print ("After cutting, %s new geometries created" % len(newGeometries))
                                 for aGeom in newGeometries:
 
                                     newFeature = QgsFeature()
@@ -940,24 +581,23 @@ class GraticularBlockCuttingTool_QGIS:
                                     debug_print ("Add new feature: %s" % res)
                                     debug_print ("new polygon: id=%s" % newFeature.id())
 
-                                # delete the original
-                                cutted_layer.deleteFeature(each_polygon_feature_with_current_BLOCK_ID.id())
+                                ###res_2 = cutted_layer.commitChanges()
+                                #cutted_layer.endEditCommand()
+                                #debug_print ("After commit changes")
 
-                                # must commit changes to ensure changes (updated original and newly created features) are written back to disk so that when these features are
-                                # read back, they have been actually updated.
-                                res_2 = cutted_layer.commitChanges()
-
-                                debug_print ("commit changes: res_2=%s" % res_2)
+                                #debug_print ("commit changes: res_2=%s" % res_2)
 
                                 break   # try to cut only once per segment
+
+            cutted_layer.endEditCommand()
+
+            # end editing session
+            # cutted_layer.commitChanges()  # commitChanges and updateFeature seem to have problem
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished cutting polygons %s (%s)" % (End_time,End_time - Start_time))
 
             self.PopPolygon_Area_Fields(cutted_layer)
-
-        #End_time = datetime.datetime.now()
-        #self.Add_Message("Finished cutting polygons %s (%s)" % (End_time,End_time - Start_time))
 
         #  *************************************************************************************************************
 
@@ -968,7 +608,6 @@ class GraticularBlockCuttingTool_QGIS:
         self.Add_Message("Start populate area fields %s" % Start_time)
         feature_count = layer.featureCount()
         self.progressBar_Init(feature_count)
-        self.Add_Message("%s features to populate" % feature_count)
 
         # http://gis.stackexchange.com/questions/114735/qgis-python-convert-the-crs-of-an-in-memory-vector-layer
         # http://www.digital-geography.com/creating-arcs-qgis-python-way/?subscribe=success#518
@@ -987,7 +626,10 @@ class GraticularBlockCuttingTool_QGIS:
         destCrs = QgsCoordinateReferenceSystem(3577)
         xform = QgsCoordinateTransform(sourceCrs, destCrs)
 
-        iter = layer.getFeatures()
+        # populate only these polygons which have been cut
+        request = QgsFeatureRequest().setFilterExpression(u'"Total"=\'-1\'')    # "Total"='-1'
+
+        iter = layer.getFeatures(request)
 
         # ? why no fields() attribute
         #field_index = layer.fields().indexFromName('Area_Hecta')
@@ -1006,19 +648,15 @@ class GraticularBlockCuttingTool_QGIS:
 
             self.progressBar_update()
 
-        layer.commitChanges()
+        #layer.commitChanges()
 
         End_time = datetime.datetime.now()
         self.Add_Message("Finished populate area fields %s (%s)" % (End_time,End_time - Start_time))
-        self.Add_Message("self.completed: %s" % self.completed)
-        self.progressBar_end()
 
     def CheckArea(self):
 
         # clear message display
         self.dlg.listWidget_Messages.clear()
-        Start_time = datetime.datetime.now()
-        self.Add_Message("Start checking area of each cell %s" % Start_time)
 
         # make sure layers are in right order
         if  self.PassInitialChecks() is False:
@@ -1049,9 +687,6 @@ class GraticularBlockCuttingTool_QGIS:
             for each_small_feature in small_features:
                 msg = "Found small feature: layer=%s ID=%d where %s < %f" % (layer.name(),  each_small_feature.id(),  'Area_Hectares', float(Minimum_Polygon_Area_Hectares_App))
                 self.Add_Message(msg)
-
-        End_time = datetime.datetime.now()
-        self.Add_Message("Finished check area %s (%s)" % (End_time, End_time - Start_time))
 
     def PopulateFieldAttributes(self):
 
@@ -1088,9 +723,6 @@ class GraticularBlockCuttingTool_QGIS:
 
             layer.startEditing()
 
-            feature_count = layer.featureCount()
-            self.progressBar_Init(feature_count)
-
             features = layer.getFeatures()
 
             for feature in features:
@@ -1101,20 +733,16 @@ class GraticularBlockCuttingTool_QGIS:
                     attribute_value = setting.find('value').text
                     attribute_name = setting.get('name')
 
-                    if attribute_name in AltFieldName_dict:
+                    #field_index = feature.fields().indexFromName(GetActualFieldName(feature,attribute_name))
+                    field_index = feature.fields().indexFromName(GetActualFieldName(layer,attribute_name))
 
-                        field_index = feature.fields().indexFromName(GetActualFieldName(layer,attribute_name))
+                    if field_index <> -1:
+                        layer.changeAttributeValue(feature.id(), field_index, attribute_value)
 
-                        if field_index <> -1:
-                            layer.changeAttributeValue(feature.id(), field_index, attribute_value)
-
-                self.progressBar_update()
-
-            layer.commitChanges()
+            #layer.commitChanges()
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's user defined field attributes %s (%s)" % (layer.name(),End_time, (End_time - Start_time) ) )
-            self.progressBar_end()
 
     def Populate_Block_Number_Field(self):
 
@@ -1145,9 +773,6 @@ class GraticularBlockCuttingTool_QGIS:
 
             layer.startEditing()
 
-            feature_count = layer.featureCount()
-            self.progressBar_Init(feature_count)
-
             features = layer.getFeatures()
 
             for feature in features:
@@ -1156,13 +781,11 @@ class GraticularBlockCuttingTool_QGIS:
                     #layer.changeAttributeValue(feature.id(), field_index_Block_Number, feature[field_index_BLCOK_ID].split('_')[-1] )
                     layer.changeAttributeValue(feature.id(), field_index_Block_Number, feature[field_index_BLCOK_ID].split('_')[Block_Number_Index] )
 
-                self.progressBar_update()
-
-            layer.commitChanges()
+            #layer.commitChanges()
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'BLOCK_Number' %s (%s)" % (layer.name(),End_time, (End_time - Start_time) ) )
-            self.progressBar_end()
+
 
     def Populate_Map_Sheet_Field(self):
         # BLOCK_ID = SC54_1234 --> Map_Sheet = SC54
@@ -1187,9 +810,6 @@ class GraticularBlockCuttingTool_QGIS:
 
             layer.startEditing()
 
-            feature_count = layer.featureCount()
-            self.progressBar_Init(feature_count)
-
             features = layer.getFeatures()
 
             for feature in features:
@@ -1197,13 +817,10 @@ class GraticularBlockCuttingTool_QGIS:
                 if field_index_BLCOK_ID <> -1 and field_index_Block_Number <> -1:
                    layer.changeAttributeValue(feature.id(), field_index_Block_Number, feature[field_index_BLCOK_ID].split('_')[0] )
 
-                self.progressBar_update()
-
-            layer.commitChanges()
+            #layer.commitChanges()
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'Map_Sheet' %s (%s)" % (layer.name(),End_time, (End_time - Start_time) ) )
-            self.progressBar_end()
 
     def Populate_Polygon_Part_and_Total_Fields(self):
 
@@ -1212,21 +829,21 @@ class GraticularBlockCuttingTool_QGIS:
         if  self.PassInitialChecks() is False:
             return ()
 
-        # # for 1M and 5M, 48 5M rows and 72 5M columns
-        # # for 1D, 4 1D rows and 6 1D columns
-        # # This block needs to be moved out later !!!!
-        # if self.dlg.comboScale.currentText() == "1D":
-        #     LAT_END_INDEX = 5
-        #     LONG_END_INDEX = 7
-        #     Block_EndIndex_1M = 0
-        # elif self.dlg.comboScale.currentText() == "5M":
-        #     LAT_END_INDEX = 49   #49
-        #     LONG_END_INDEX = 73 #73
-        #     Block_EndIndex_1M = 0
-        # elif self.dlg.comboScale.currentText() == "1M":
-        #     LAT_END_INDEX = 49       #49
-        #     LONG_END_INDEX = 73      #73
-        #     Block_EndIndex_1M = 24
+        # for 1M and 5M, 48 5M rows and 72 5M columns
+        # for 1D, 4 1D rows and 6 1D columns
+        # This block needs to be moved out later !!!!
+        if self.dlg.comboScale.currentText() == "1D":
+            LAT_END_INDEX = 5
+            LONG_END_INDEX = 7
+            Block_EndIndex_1M = 0
+        elif self.dlg.comboScale.currentText() == "5M":
+            LAT_END_INDEX = 49   #49
+            LONG_END_INDEX = 73 #73
+            Block_EndIndex_1M = 0
+        elif self.dlg.comboScale.currentText() == "1M":
+            LAT_END_INDEX = 49       #49
+            LONG_END_INDEX = 73      #73
+            Block_EndIndex_1M = 24
 
         number_of_layers = self.iface.mapCanvas().layerCount()
 
@@ -1305,11 +922,11 @@ class GraticularBlockCuttingTool_QGIS:
             # ==========
 
 
-            layer.commitChanges()
+            #layer.commitChanges()
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's ''Part' and 'Total' fields %s (%s)" % (layer.name(),End_time, (End_time - Start_time) ) )
-            self.progressBar_end()
+
 
     def Populate_Vertices_Field(self):
 
@@ -1381,10 +998,10 @@ class GraticularBlockCuttingTool_QGIS:
                     #msg = "field index: %d numPts: %d" % (field_index_Number_Of_Vertices, numPts)
                     #self.Add_Message(msg)
                 
-            layer.commitChanges()
+            #layer.commitChanges()
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'Vertices'field %s (%s)" % (layer.name(),End_time, (End_time - Start_time) ) )
-            self.progressBar_end()
+
 
     # http://stackoverflow.com/questions/11457839/populating-a-table-in-pyqt-with-file-attributes
     def EditUserSettings(self):

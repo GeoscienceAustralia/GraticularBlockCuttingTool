@@ -8,7 +8,7 @@
 
 [general]
 name=GraticularBlockCuttingTool_QGIS
-qgisMinimumVersion=3.0
+qgisMinimumVersion=2.0
 description=This plugin cuts graticular polygon blocks
 version=0.1
 author=Qing Zhong

@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/plugins/GraticularBlockCuttingTool" >
+    <qresource prefix="/plugins/GraticularBlockCuttingTool_QGIS" >
         <file>icon.png</file>
     </qresource>
 </RCC>

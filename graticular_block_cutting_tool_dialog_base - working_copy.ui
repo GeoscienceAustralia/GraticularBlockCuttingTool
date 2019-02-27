@@ -60,8 +60,8 @@
     <rect>
      <x>20</x>
      <y>40</y>
-     <width>770</width>
-     <height>100</height>
+     <width>771</width>
+     <height>101</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -151,8 +151,8 @@
     <rect>
      <x>20</x>
      <y>400</y>
-     <width>560</width>
-     <height>240</height>
+     <width>561</width>
+     <height>241</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -313,7 +313,7 @@
      <string>Block Number</string>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QCheckBox" name="chk_MapSheet">
@@ -329,7 +329,7 @@
      <string>Map Sheet</string>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QCheckBox" name="chk_PolygonPartAndTotalField">
@@ -345,7 +345,7 @@
      <string>Polygon Part and Total</string>
     </property>
     <property name="checked">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QCheckBox" name="chk_VerticesField">
@@ -364,35 +364,6 @@
      <bool>true</bool>
     </property>
    </widget>
-  </widget>
-  <widget class="QProgressBar" name="progressBar">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>695</y>
-     <width>571</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="value">
-    <number>0</number>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btn_Test">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>650</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Test</string>
-   </property>
   </widget>
  </widget>
  <resources/>

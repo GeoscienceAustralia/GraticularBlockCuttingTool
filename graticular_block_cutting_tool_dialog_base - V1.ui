@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>808</width>
-    <height>726</height>
+    <height>624</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="button_box">
    <property name="geometry">
     <rect>
-     <x>420</x>
-     <y>690</y>
+     <x>426</x>
+     <y>540</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -32,8 +32,8 @@
   <widget class="QPushButton" name="btn_CutPolygons">
    <property name="geometry">
     <rect>
-     <x>610</x>
-     <y>420</y>
+     <x>640</x>
+     <y>410</y>
      <width>121</width>
      <height>23</height>
     </rect>
@@ -45,7 +45,7 @@
   <widget class="QPushButton" name="btn_CheckArea">
    <property name="geometry">
     <rect>
-     <x>610</x>
+     <x>640</x>
      <y>450</y>
      <width>121</width>
      <height>23</height>
@@ -55,13 +55,26 @@
     <string>Area check</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="btn_PopulateFieldAttributes">
+   <property name="geometry">
+    <rect>
+     <x>640</x>
+     <y>490</y>
+     <width>131</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Populate field attributes</string>
+   </property>
+  </widget>
   <widget class="QListWidget" name="listWidget_Instruction">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>40</y>
-     <width>770</width>
-     <height>100</height>
+     <width>771</width>
+     <height>101</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -151,8 +164,8 @@
     <rect>
      <x>20</x>
      <y>400</y>
-     <width>560</width>
-     <height>240</height>
+     <width>541</width>
+     <height>171</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -166,7 +179,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>650</y>
+     <y>580</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -231,167 +244,6 @@
    </property>
    <property name="text">
     <string>Save User Settings</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboScale">
-   <property name="geometry">
-    <rect>
-     <x>640</x>
-     <y>390</y>
-     <width>41</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>610</x>
-     <y>390</y>
-     <width>31</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Scale</string>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>600</x>
-     <y>480</y>
-     <width>151</width>
-     <height>151</height>
-    </rect>
-   </property>
-   <property name="autoFillBackground">
-    <bool>true</bool>
-   </property>
-   <property name="title">
-    <string>Field attributes</string>
-   </property>
-   <property name="flat">
-    <bool>false</bool>
-   </property>
-   <widget class="QPushButton" name="btn_PopulateFieldAttributes">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>120</y>
-      <width>131</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Populate field attributes</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="chk_UserDefinedFields">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>121</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>User defined fields</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="chk_BlockNumberField">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>81</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Block Number</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="chk_MapSheet">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>111</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Map Sheet</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="chk_PolygonPartAndTotalField">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>80</y>
-      <width>131</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Polygon Part and Total</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="chk_VerticesField">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>100</y>
-      <width>70</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Vertices</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QProgressBar" name="progressBar">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>695</y>
-     <width>571</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="value">
-    <number>0</number>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btn_Test">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>650</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Test</string>
    </property>
   </widget>
  </widget>
