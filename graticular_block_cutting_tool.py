@@ -42,41 +42,12 @@ def debug_print(msg):
         print(msg)
 
 
-Title = "GraticularBlockCuttingTool QGIS 3.x.x 26 Feb 2019 15:15 AM"
+Title = "GraticularBlockCuttingTool QGIS 3.x.x 28 Feb 2019 10:00 AM"
 BlockLetter_of_1M_BlockID = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 
 USER_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__),   "user.config")
 
-# Dictionary: generic name as key, each tuple is a collection of truncated, short names and some variants
-#
-# some data sets use Number_of_Vertices, and some use Number_Of_Vertices
-shortFieldName_dict = {
-"BLOCK_ID":("BLOCK_ID","BlkID"),
-"Map_Sheet":("Map_Sheet","MapSheet"),
-"Block_Number":("Block_Numb","BlkNo"),
-"Block_Letter":("Block_Lett","BlkLetter"),
-"Block_Number_XXX":("Block_Numb","BlkNoXXX"),
-"Block_ID_1D":("Block_ID_1","BlkID_1D"),
-"WMB_ID":("WMB_ID","WMB_ID"),
-"Country":("Country","Country"),
-"Offshore_Area":("Offshore_A","Ofshr_Area"),
-"Epoch":("Epoch","Epoch"),
-"Datum":("Datum","Datum"),
-"Vertices":("Vertices","Vertices"),
-"Cut":("Cut","Cut"),
-"Part":("Part","Part"),
-"Total":("Total","Total"),
-"Comment":("Comment","Comment"),
-"Number_Of_Vertices":("Number_of_Vertices","Number_of","Number_Of_","NoOfVertx"),
-"Area_Acres":("Area_Acres","AreaAcres"),
-"Area_Hectares":("Area_Hecta","AreaHectar"),
-"Map_Name":("Map_Name","Map_Name"),
-"LEGSOU":("LEGSOU","LEGSOU"),
-"Registry_No":("Registry_N","REG_No"),
-"IP_Owner":("IP_Owner","IP_Owner"),
-"Licence":("Licence","Licence"),
-"Disclaimer":("Disclaimer","Disclaimer"),
-}
+from .AltFieldName_dic import *
 
 def GetActualFieldName(layer, standard_field_name):
     #
@@ -91,7 +62,7 @@ def GetActualFieldName(layer, standard_field_name):
 
     actual_field_name = ""
 
-    all_field_names = shortFieldName_dict[standard_field_name]
+    all_field_names = AltFieldName_dict[standard_field_name]
 
     for each_field_name in all_field_names:
 
@@ -115,6 +86,12 @@ def GetMapSheetName(layer):
         sep = "_1D_"
     elif "_5M_" in layer_name:
         sep = "_5M_"
+    elif "_6M_" in layer_name:
+        sep = "_6M_"
+    elif "_10S_" in layer_name:
+        sep = "_10S_"
+    elif "_6S_" in layer_name:
+        sep = "_6S_"
 
     layer_name = layer_name.split(sep)[0]
 
@@ -163,8 +140,10 @@ class GraticularBlockCuttingTool:
         self.dlg.setWindowTitle(Title)
         #
         self.dlg.comboScale.addItem("5M")
+        self.dlg.comboScale.addItem("6M")
         self.dlg.comboScale.addItem("1M")
-        self.dlg.comboScale.addItem("1D")
+        self.dlg.comboScale.addItem("10S")
+        self.dlg.comboScale.addItem("6S")
         #
         self.dlg.btn_EditUserSettings.clicked.connect(self.EditUserSettings)
         self.dlg.btn_SaveUserSettings.clicked.connect(self.SaveUserSettings)
@@ -651,7 +630,7 @@ class GraticularBlockCuttingTool:
                     attribute_value = setting.find('value').text
                     attribute_name = setting.get('name')
 
-                    if attribute_name in shortFieldName_dict:
+                    if attribute_name in AltFieldName_dict:
 
                         field_index = feature.fields().indexFromName(GetActualFieldName(layer,attribute_name))
 
