@@ -34,15 +34,15 @@ import xml.etree.ElementTree as ET
 
 import datetime
 
+#import pydevd
+
 DEBUG = False
-
-
 def debug_print(msg):
     if DEBUG:
         print(msg)
 
 
-Title = "GraticularBlockCuttingTool QGIS 3.x.x 28 Feb 2019 10:00 AM"
+Title = "GraticularBlockCuttingTool QGIS 3.x.x 08 Mar 2019 10:00 AM"
 BlockLetter_of_1M_BlockID = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 
 USER_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__),   "user.config")
@@ -293,6 +293,12 @@ class GraticularBlockCuttingTool:
     def download(self):
 
         self.progressBar_Init(1000)
+
+        # a = 2
+        # pydevd.settrace('127.0.0.1', port=62474, stdoutToServer=True, stderrToServer=True)
+        # a += 1
+        # pydevd.stoptrace()
+
         while self.completed < 1000:
             # self.completed = self.completed + 1
             self.progressBar_update()
@@ -301,6 +307,7 @@ class GraticularBlockCuttingTool:
     def ClearMessage(self):
         # clear message display
         self.dlg.listWidget_Messages.clear()
+        self.progressBar_Init(100)
 
     def PassInitialChecks(self):
 
@@ -336,165 +343,187 @@ class GraticularBlockCuttingTool:
         if self.PassInitialChecks() is False:
             return ()
 
-        top_layer = self.iface.mapCanvas().layer(0)
-        cutter_layer = top_layer
+        try:
 
-        number_of_layers = self.iface.mapCanvas().layerCount()
+            #pydevd.settrace('127.0.0.1', port=62474, stdoutToServer=True, stderrToServer=True)
 
-        for i in range(1, number_of_layers, 1):
+            top_layer = self.iface.mapCanvas().layer(0)
+            cutter_layer = top_layer
 
-            cutted_layer = self.iface.mapCanvas().layer(i)
-            debug_print("cutted_layer: %s" % repr(cutted_layer))
-            # field_index_Vertices = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'Vertices') )
-            # field_index_BLOCK_ID = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'BLOCK_ID') )
-            field_index_Vertices = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'Vertices'))
-            field_index_BLOCK_ID = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'BLOCK_ID'))
-            field_index_Total = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'Total'))
+            number_of_layers = self.iface.mapCanvas().layerCount()
 
-            # make sure the layer to be cut is a polygon feature class
-            if cutted_layer.geometryType() != QgsWkbTypes.PolygonGeometry:
-                continue
+            for i in range(1, number_of_layers, 1):
 
-            Start_time = datetime.datetime.now()
-            self.Add_Message("Start cutting polygons %s" % Start_time)
+                cutted_layer = self.iface.mapCanvas().layer(i)
+                caps = cutted_layer.dataProvider().capabilities()
+                caps_string = cutted_layer.dataProvider().capabilitiesString()
+                self.Add_Message(caps_string)
 
-            # *************************************************************************************************************
+                debug_print("cutted_layer: %s" % repr(cutted_layer))
+                # field_index_Vertices = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'Vertices') )
+                # field_index_BLOCK_ID = each_polygon_feature.fields().indexFromName( GetActualFieldName(each_polygon_feature,'BLOCK_ID') )
+                field_index_Vertices = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'Vertices'))
+                field_index_BLOCK_ID = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'BLOCK_ID'))
+                field_index_Total = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'Total'))
+                field_index_OID = cutted_layer.fields().indexFromName(GetActualFieldName(cutted_layer, 'OBJECTID'))
 
-            selected_cutted_features = cutted_layer.selectedFeatures()
+                # make sure the layer to be cut is a polygon feature class
+                if cutted_layer.geometryType() != QgsWkbTypes.PolygonGeometry:
+                    continue
 
-            selected_feature_count = cutted_layer.selectedFeatureCount()
-            self.progressBar_Init(selected_feature_count)
-            self.Add_Message("Number of polygons to be cut: %d" % selected_feature_count)
+                Start_time = datetime.datetime.now()
+                self.Add_Message("Start cutting polygons %s" % Start_time)
 
-            cutted_layer.startEditing()
+                # *************************************************************************************************************
 
-            for each_polygon_feature in selected_cutted_features:
+                selected_cutted_features = cutted_layer.selectedFeatures()
 
-                self.progressBar_update()
+                selected_feature_count = cutted_layer.selectedFeatureCount()
+                self.progressBar_Init(selected_feature_count)
+                self.Add_Message("Number of polygons to be cut: %d" % selected_feature_count)
 
-                BLOCK_ID = each_polygon_feature[field_index_BLOCK_ID]
+                cutted_layer.startEditing()
 
-                # search for cutter features which intersect with each_polygon_feature
+                for each_polygon_feature in selected_cutted_features:
 
-                myGeometry = each_polygon_feature.geometry()
-                areaOfInterest = myGeometry.boundingBox()
+                    self.progressBar_update()
 
-                request = QgsFeatureRequest()
-                request.setFilterRect(areaOfInterest)
+                    BLOCK_ID = each_polygon_feature[field_index_BLOCK_ID]
 
-                cutter_features = cutter_layer.getFeatures(request)
+                    # search for cutter features which intersect with each_polygon_feature
 
-                merged_cutter_geom = QgsGeometry().asPolyline()
+                    myGeometry = each_polygon_feature.geometry()
+                    areaOfInterest = myGeometry.boundingBox()
 
-                first_cutter_geom_defined = False
+                    request = QgsFeatureRequest()
+                    request.setFilterRect(areaOfInterest)
 
-                for each_cutter_feature in cutter_features:
+                    cutter_features = cutter_layer.getFeatures(request)
 
-                    current_geom = each_cutter_feature.geometry()
+                    #merged_cutter_geom = QgsGeometry().asPolyline()	# QGIS 3.4.3-Madeira does NOT need this line
+                    merged_cutter_geom = None
 
-                    #
-                    if not first_cutter_geom_defined:
-                        merged_cutter_geom = current_geom
-                        first_cutter_geom_defined = True
-                    else:
-                        merged_cutter_geom = merged_cutter_geom.combine(current_geom)
+                    first_cutter_geom_defined = False
 
-                if not merged_cutter_geom:
-                    continue     # no intersect polylines found, move to next polygon
+                    for each_cutter_feature in cutter_features:
 
-                geom_col = merged_cutter_geom.asGeometryCollection()
+                        current_geom = each_cutter_feature.geometry()
 
-                # giving problem ?
-                debug_print("For BLOCK_ID=%s, may need to cut %d times" % (BLOCK_ID, len(geom_col)))
-                # print "For BLOCK_ID=%s, may need to cut %d times" %  (BLOCK_ID,len(geom_col))
+                        #
+                        if not first_cutter_geom_defined:
+                            merged_cutter_geom = current_geom
+                            first_cutter_geom_defined = True
+                        else:
+                            merged_cutter_geom = merged_cutter_geom.combine(current_geom)
 
-                for each_merged_cutter_geom in geom_col:
+                    if not merged_cutter_geom:
+                        continue     # no intersect polylines found, move to next polygon
 
-                    # debug_print "Each geom_col ->", each_merged_cutter_geom.asPolyline()
-                    debug_print("Each cutting geom_col  length-> %s" % each_merged_cutter_geom.length())
+                    geom_col = merged_cutter_geom.asGeometryCollection()
 
-                    # get all polygon features with the same BLOCK_ID: one is the original, and the others are newly created after cutting
-                    BLOCK_ID_FieldName = GetActualFieldName(cutted_layer, "BLOCK_ID")
-                    request_2 = QgsFeatureRequest().setFilterExpression( u'"' + BLOCK_ID_FieldName + '" =\'' + BLOCK_ID + '\'' )
-                    polygon_features_with_current_BLOCK_ID = cutted_layer.getFeatures( request_2 )
+                    # giving problem ?
+                    debug_print("For BLOCK_ID=%s, may need to cut %d times" % (BLOCK_ID, len(geom_col)))
+                    # print "For BLOCK_ID=%s, may need to cut %d times" %  (BLOCK_ID,len(geom_col))
 
-                    for each_polygon_feature_with_current_BLOCK_ID in polygon_features_with_current_BLOCK_ID:
+                    for each_merged_cutter_geom in geom_col:
 
-                        debug_print("Test to see if this polygon will be cut: id= %s" % each_polygon_feature_with_current_BLOCK_ID.id())
+                        # debug_print "Each geom_col ->", each_merged_cutter_geom.asPolyline()
+                        debug_print("Each cutting geom_col  length-> %s" % each_merged_cutter_geom.length())
 
-                        This_geometry = each_polygon_feature_with_current_BLOCK_ID.geometry()
+                        # get all polygon features with the same BLOCK_ID: one is the original, and the others are newly created after cutting
+                        BLOCK_ID_FieldName = GetActualFieldName(cutted_layer, "BLOCK_ID")
+                        request_2 = QgsFeatureRequest().setFilterExpression( u'"' + BLOCK_ID_FieldName + '" =\'' + BLOCK_ID + '\'' )
+                        polygon_features_with_current_BLOCK_ID = cutted_layer.getFeatures( request_2 )
 
-                        if This_geometry.intersects(each_merged_cutter_geom):
+                        for each_polygon_feature_with_current_BLOCK_ID in polygon_features_with_current_BLOCK_ID:
 
-                            # when commitChanges() is called, edit session is  stopped, so call startEditing() to make sure it is in editing mode
-                            cutted_layer.startEditing()
+                            results = False
 
-                            debug_print("Try to cut this polygon: id=%d" % each_polygon_feature_with_current_BLOCK_ID.id())
-                            # split geometry
-                            result, newGeometries, topoTestPoints = This_geometry.splitGeometry(each_merged_cutter_geom.asPolyline(), True)
-                            This_geometry_cp = This_geometry
+                            debug_print("Test to see if this polygon will be cut: id= %s" % each_polygon_feature_with_current_BLOCK_ID.id())
 
-                            if result == 0:
+                            This_geometry = each_polygon_feature_with_current_BLOCK_ID.geometry()
 
-                                debug_print("Cutting ok")
-                                # update the original feature
-                                # each_polygon_feature_with_current_BLOCK_ID.setGeometry(This_geometry_cp)
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Total, '-1') # set 'Total' field to -1 to indicate it has been cut
-                                # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Vertices, '') # if use GEO_NONE then it is a string 'NONE'
-                                # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                # updateFeature() function has problem witg shapefile for QGIS 2.14
-                                # cutted_layer.updateFeature(each_polygon_feature_with_current_BLOCK_ID)
-                                # cutted_layer.changeGeometry(each_polygon_feature_with_current_BLOCK_ID.id(), This_geometry) # This line will crash !!!!
+                            if This_geometry.intersects(each_merged_cutter_geom):
 
-                                # commit after each cut
-                                # if commit here new feature is deleted !!!
-                                # cutted_layer.commitChanges()
+                                # when commitChanges() is called, edit session is  stopped, so call startEditing() to make sure it is in editing mode
+                                cutted_layer.startEditing()
 
-                                # create new feature from original
+                                debug_print("Try to cut this polygon: id=%d" % each_polygon_feature_with_current_BLOCK_ID.id())
+                                # split geometry
+                                result, newGeometries, topoTestPoints = This_geometry.splitGeometry(each_merged_cutter_geom.asPolyline(), True)
+                                # This_geometry_cp = copy.deepcopy(This_geometry) # get can't pickle obj msg
+                                This_geometry_cp = This_geometry
 
-                                newFeature = QgsFeature()
-                                newFeature.setGeometry(This_geometry_cp)
-                                # copy all attributes. Must have this, otherwise the new feature will NOT be created, unlike ArcGIS's way of creating new features
-                                newFeature.setAttributes(each_polygon_feature_with_current_BLOCK_ID.attributes())
-                                # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
-                                newFeature.setAttribute(field_index_Vertices, '')
-                                newFeature.setAttribute(field_index_Total, '-1')
+                                if result == 0:
 
-                                # ok for Q2 res = cutted_layer.addFeatures([newFeature], True)
-                                res = cutted_layer.addFeatures([newFeature])
-                                debug_print("Add 'new' feature: %s" % res)
-                                debug_print("new polygon: id=%s" % newFeature.id())
+                                    # update the original feature
+                                    # each_polygon_feature_with_current_BLOCK_ID.setGeometry(This_geometry_cp)
+                                    # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Total, '-1') # set 'Total' field to -1 to indicate it has been cut
+                                    # each_polygon_feature_with_current_BLOCK_ID.setAttribute(field_index_Vertices, '') # if use GEO_NONE then it is a string 'NONE'
+                                    # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
+                                    # updateFeature() function has problem witg shapefile for QGIS 2.14
+                                    # cutted_layer.updateFeature(each_polygon_feature_with_current_BLOCK_ID)
+                                    # cutted_layer.changeGeometry(each_polygon_feature_with_current_BLOCK_ID.id(), This_geometry) # This line will crash !!!!
 
-                                for aGeom in newGeometries:
+                                    # commit after each cut
+                                    # if commit here new feature is deleted !!!
+                                    # cutted_layer.commitChanges()
 
-                                    newFeature = QgsFeature()
-                                    newFeature.setGeometry(aGeom)
+                                    # create new feature from original
+
+                                    newFeature = QgsFeature(cutted_layer.fields())
+                                    newFeature.setGeometry(This_geometry_cp)
                                     # copy all attributes. Must have this, otherwise the new feature will NOT be created, unlike ArcGIS's way of creating new features
-                                    newFeature.setAttributes(each_polygon_feature_with_current_BLOCK_ID.attributes())
+                                    layer_fields = each_polygon_feature_with_current_BLOCK_ID.attributes()
+                                    if field_index_OID != -1:
+                                        layer_fields[0] = None  # for FGDB, must get system to set OID
+                                    newFeature.setAttributes(layer_fields)
                                     # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
                                     newFeature.setAttribute(field_index_Vertices, '')
                                     newFeature.setAttribute(field_index_Total, '-1')
 
-                                    # Q2 res = cutted_layer.addFeatures([newFeature], True)
-                                    res = cutted_layer.addFeatures([newFeature])
-                                    debug_print("Add new feature: %s" % res)
-                                    debug_print("new polygon: id=%s" % newFeature.id())
+                                    # ok for QGIS2 res = cutted_layer.addFeatures([newFeature], True)
+                                    results = cutted_layer.addFeatures([newFeature])    # QGIS 3
 
-                                # delete the original
-                                cutted_layer.deleteFeature(each_polygon_feature_with_current_BLOCK_ID.id())
+                                    for aGeom in newGeometries:
 
-                                # must commit changes to ensure changes (updated original and newly created features) are written back to disk so that when these features are
-                                # read back, they have been actually updated.
-                                res_2 = cutted_layer.commitChanges()
+                                        newFeature = QgsFeature(cutted_layer.fields())
+                                        newFeature.setGeometry(aGeom)
+                                        newFeature.setAttributes(layer_fields)
+                                        # 'Vertices' field need to be re-attributed, set to blank here so that at next proceesing phase will know which feature to be attributed
+                                        newFeature.setAttribute(field_index_Vertices, '')
+                                        newFeature.setAttribute(field_index_Total, '-1')
 
-                                debug_print("commit changes: res_2=%s" % res_2)
+                                        # QGIS2 res = cutted_layer.addFeatures([newFeature], True)
+                                        res = cutted_layer.addFeatures([newFeature])
+                                        results = results & res
 
-                                break   # try to cut only once per segment
+                                    # delete the original
+                                    if results:
+                                        cutted_layer.deleteFeature(each_polygon_feature_with_current_BLOCK_ID.id())
+                                    else:
+                                        self.Add_Message("Failed to split polygon: %s" % (each_polygon_feature_with_current_BLOCK_ID.id()))
 
-            End_time = datetime.datetime.now()
-            self.Add_Message("Finished cutting polygons %s (%s)" % (End_time, End_time - Start_time))
+                                    # must commit changes to ensure changes (updated original and newly created features) are written back to disk so that when these features are
+                                    # read back, they have been actually updated.
+                                    res_2 = cutted_layer.commitChanges()
 
-            self.PopPolygon_Area_Fields(cutted_layer)
+                                    debug_print("commit changes: res_2=%s" % res_2)
+
+                                    break   # try to cut only once per segment
+
+                End_time = datetime.datetime.now()
+                self.Add_Message("Finished cutting polygons %s (%s)" % (End_time, End_time - Start_time))
+
+                self.PopPolygon_Area_Fields(cutted_layer)
+
+            #pydevd.stoptrace()
+
+        except Exception as ex:
+            import sys
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
 
             #  *************************************************************************************************************
 
@@ -545,12 +574,14 @@ class GraticularBlockCuttingTool:
 
         End_time = datetime.datetime.now()
         self.Add_Message("Finished populate area fields %s (%s)" % (End_time, End_time - Start_time))
-        self.progressBar_end()
+        #self.progressBar_end()
 
     def CheckArea(self):
 
         # clear message display
         self.dlg.listWidget_Messages.clear()
+        Start_time = datetime.datetime.now()
+        self.Add_Message("Start checking for very small polygons%s" % Start_time)
 
         # make sure layers are in right order
         if self.PassInitialChecks() is False:
@@ -581,6 +612,9 @@ class GraticularBlockCuttingTool:
             for each_small_feature in small_features:
                 msg = "Found small feature: layer=%s ID=%d where %s < %f" % (layer.name(),  each_small_feature.id(),  'Area_Hectares', float(Minimum_Polygon_Area_Hectares_App))
                 self.Add_Message(msg)
+
+        End_time = datetime.datetime.now()
+        self.Add_Message("Finished %s (%s)" % (End_time, End_time - Start_time))
 
     def PopulateFieldAttributes(self):
 
@@ -643,7 +677,7 @@ class GraticularBlockCuttingTool:
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's user defined field attributes %s (%s)" % (layer.name(), End_time, (End_time - Start_time)))
-            self.progressBar_end()
+            #self.progressBar_end()
 
     def Populate_Block_Number_Field(self):
 
@@ -691,7 +725,7 @@ class GraticularBlockCuttingTool:
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'BLOCK_Number' %s (%s)" % (layer.name(), End_time, (End_time - Start_time)))
-            self.progressBar_end()
+            #self.progressBar_end()
 
     def Populate_Map_Sheet_Field(self):
         # BLOCK_ID = SC54_1234 --> Map_Sheet = SC54
@@ -732,7 +766,7 @@ class GraticularBlockCuttingTool:
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'Map_Sheet' %s (%s)" % (layer.name(), End_time, (End_time - Start_time)))
-            self.progressBar_end()
+            #self.progressBar_end()
 
     def Populate_Polygon_Part_and_Total_Fields(self):
 
@@ -836,7 +870,7 @@ class GraticularBlockCuttingTool:
 
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's ''Part' and 'Total' fields %s (%s)" % (layer.name(), End_time, (End_time - Start_time)))
-            self.progressBar_end()
+            #self.progressBar_end()
 
     def Populate_Vertices_Field(self):
 
@@ -912,7 +946,7 @@ class GraticularBlockCuttingTool:
             layer.commitChanges()
             End_time = datetime.datetime.now()
             self.Add_Message("Finished populating %s's 'Vertices'field %s (%s)" % (layer.name(), End_time, (End_time - Start_time)))
-            self.progressBar_end()
+            #self.progressBar_end()
 
     # http://stackoverflow.com/questions/11457839/populating-a-table-in-pyqt-with-file-attributes
 
